@@ -8,7 +8,7 @@ Link video giải thích (3–5 phút, xem mục D):
 
 | Bài | Công cụ | Dùng để làm gì (1 câu) | Tôi đã sửa hoặc bỏ phần nào của kết quả AI, vì sao |
 |---|---|---|---|
-| 1 |  |  |  |
+| 1 | Deep-seek-v4.1 flash |  |  |
 | 2 |  |  |  |
 | 3 |  |  |  |
 
@@ -45,16 +45,20 @@ Về `seed` thiếu: đề liệt kê `seed` không kèm giá trị mặc địn
 
 | ID | Dòng | Kịch bản gây lỗi | Hậu quả | Mức độ | Cách sửa (1 câu) |
 |---|---|---|---|---|---|
-| L1 |  |  |  |  |  |
-| L2 |  |  |  |  |  |
-| L3 |  |  |  |  |  |
-| L4 |  |  |  |  |  |
-| L5 |  |  |  |  |  |
+| L1 | 43–49 | Chrome hoặc extension sập (hay `write` lỗi) ngay sau khi `clickPost()` trả về nhưng trước khi lưu `submittedAt` | DB vẫn ghi job ở `running`/`queued`, lần chạy sau bấm Đăng lần hai → bài trùng trên tường | Cao | Ghi mốc `submitting` + `submittedAt` xuống DB **trước** khi bấm và coi mọi job đã qua mốc đó là `submitted_unknown`, không đưa lại hàng chờ |
+| L2 | 55–61 | `clickPost()` thành công nhưng `findPublishedLink()` ném lỗi (bài đã lên, chưa lấy được link) | `catch` đặt `state = 'queued'` và `dueAt = +90s` → job bị đăng lại dù đã đăng | Cao | Trong `catch`, nếu đã qua mốc bấm Đăng thì chuyển `needs_reconcile`; chỉ trả `queued` khi chắc chắn chưa bấm |
+| L3 | 38–40 | Một file media tải lỗi (ví dụ "Extension chưa được ghép nối với Media Bridge") | Chỉ `console.warn` rồi vẫn `clickPost()` → đăng caption trơ hoặc thiếu media, trái yêu cầu | Cao | Nếu `uploaded < job.post.media.length` thì `throw` để huỷ job, tuyệt đối không bấm Đăng |
+| L4 | 22–23 | `readCookie('c_user')` trả rỗng/undefined (chưa đăng nhập, tab sai, cookie bị chặn) | Điều kiện `uid && ...` bỏ qua kiểm tra nick nên vẫn đăng; ngoài ra `throw` nằm ngoài `try` nên job kẹt `running` vĩnh viễn | Cao | Fail-closed: thiếu UID là lỗi chặn, và đưa kiểm tra nick vào trong `try` để job luôn được cập nhật trạng thái |
+| L5 | 45–54 | Job khác ghi DB trong lúc `findPublishedLink()` chờ vài chục giây | `write(d2)` ghi đè ảnh chụp cũ, nuốt thay đổi của job khác — có thể đẩy job đã `submitted` về `queued` → đăng trùng | Cao | Chỉ cập nhật đúng bản ghi job (transaction/patch) và đọc lại ngay trước khi ghi, không ghi cả DB từ ảnh chụp cũ |
+| L6 | 16–19, 44 | Hai job cùng profile chạy song song, hoặc `clickPost()` lỗi nên mốc `deskLastInteraction` không được ghi | Cả hai đọc cùng `last` rồi cùng lọt; các thao tác `openComposer`/`fillText`/`upload`/`clickPost` diễn ra liền nhau, không cách 60 giây | Cao | Khoá theo profile (mutex) và ghi mốc **ngay trước mỗi** thao tác Facebook, không chỉ một lần sau click |
+| L7 | 10–13 | `jobId` không còn trong DB, hoặc job đã `success`/`submitted` bị gọi lại; job lỗi được requeue không giới hạn | `job.state` ném TypeError không ai bắt; job đã đăng bị set lại `running`; retry lặp vô hạn vì không có `attempt` cap | Trung bình | Kiểm tra job tồn tại + kiểm tra máy trạng thái trước khi chạy, và chặn số lần thử |
 
 Ba trường hợp kiểm thử tôi sẽ viết:
-1. 
-2. 
-3. 
+1. **Sập sau khi bấm Đăng:** giả `tab` có `clickPost` resolve nhưng lần `write` kế tiếp ném lỗi (mô phỏng Chrome sập); chạy lại `runJob` với cùng `jobId` → khẳng định `clickPost` chỉ được gọi đúng 1 lần và job nằm ở `needs_reconcile`, không quay về `queued`.
+2. **Thiếu media:** cho `job.post.media` có 3 phần tử, `tab.upload` ném lỗi ở phần tử thứ 2 → khẳng định `tab.clickPost` không được gọi lần nào và job kết thúc ở trạng thái lỗi an toàn.
+3. **Nick không xác định + hai job song song:** cho `readCookie('c_user')` trả rỗng → khẳng định không có thao tác nào lên `tab`; sau đó cho UID đúng và chạy hai `runJob` đồng thời trên cùng profile → khẳng định chỉ một lần `clickPost` và mọi thao tác Facebook liên tiếp của profile cách nhau ≥ 60 giây.
+
+Ba trường hợp này đã được hiện thực hoá thành bộ test chạy được: `bai2/bai2-fixed.test.mjs` (13 test, chạy `node --test bai2/bai2-fixed.test.mjs`). Test dùng `store.js` + `chrome.storage` + `tab` giả lập trong thư mục tạm nên không cần Chrome và không cần đăng nhập Facebook. Để chạy nhanh, test rút ngắn thời gian chờ qua `__configureForTests()`; giá trị production vẫn là 60000 ms và có một test riêng khẳng định điều đó. Tôi đã kiểm chứng ngược: hoàn nguyên từng chỗ sửa (L1…L7) thì test tương ứng fail, riêng L7 có hai lớp kiểm tra nên phải bỏ cả hai mới fail.
 
 ## D. Bài 3 — Kết luận
 
