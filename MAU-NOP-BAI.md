@@ -62,20 +62,30 @@ Ba trường hợp này đã được hiện thực hoá thành bộ test chạy
 
 ## D. Bài 3 — Kết luận
 
-Cách chạy script: `...`
+Cách chạy script: `node bai3/phan-tich.mjs` (mặc định đọc `bai3-log-mau.csv`, ghi `bai3/bao-cao.json`; có thể truyền đường dẫn riêng: `node bai3/phan-tich.mjs <csv> <json>`).
+
+Kết quả chạy trên log mẫu (77 dòng): Nick-01 15 dòng/11 đăng/0.7333; Nick-02 17/8/0.4706; Nick-03 18/8/0.4444; Nick-04 12/10/0.8333; Nick-05 15/12/0.8. `can_doi_soat` 7 phần tử, `trung_ma` 2 mã, `vi_pham_gian_cach` `{"Nick-04":6}`, `dang_ban_dem` `{"Nick-05":6}`.
+
+Hai quy ước tôi chọn khi đề chưa nói rõ, để người chấm đối chiếu: (1) `can_doi_soat` liệt kê theo **từng dòng** chờ link, nên `DOC2::bai-9` xuất hiện hai lần vì bài này bị bấm Đăng hai lần ở hai thời điểm khác nhau (08:40:06 và 09:30:00) — mỗi lần bấm là một việc cần đối soát riêng; (2) `nhom_loi` gộp theo đúng chuỗi ở cột "Lỗi gần nhất", sắp giảm dần theo số lần để nhóm nghiêm trọng nhất lên đầu.
 
 Vấn đề đáng lo nhất và vì sao:
 
+Vấn đề nghiêm trọng nhất là **không có hàng rào chống đăng trùng**: có 2 mã bài bị bấm Đăng nhiều lần (`DOC1::bai-6` thậm chí đăng thành công 2 lần với link `p/6` và `p/dup-6`, `DOC2::bai-9` bấm 2 lần và cả 2 đều đang chờ link). Đây là loại lỗi người dùng nhìn thấy ngay, không thể xoá hậu quả, và là dấu hiệu tool đang requeue sau khi đã bấm — đúng lỗi L1/L2 của Bài 2. Kèm theo đó, 7 bài của Nick-02 đang ở trạng thái "Đã bấm Đăng, chờ link" (chiếm 41% số bài của nick này, tỉ lệ thành công chỉ 0,4706) cho thấy bước xác minh sau khi bấm đang hỏng hoặc bị bỏ qua, và 9/14 lỗi toàn hệ thống tập trung ở Nick-03 với cùng một nguyên nhân media. Nếu để nguyên, mỗi ngày vận hành đều có thể sinh thêm bài trùng và bài mồ côi.
+
 5 việc trong tuần tới (xếp theo ưu tiên):
-1. 
-2. 
-3. 
-4. 
-5. 
+1. Chặn đăng trùng: thêm khoá duy nhất theo `(nick, mã bài)` ở tầng dữ liệu và chỉ cho một job sống cho mỗi mã bài; rà tay 7 bài chờ link của Nick-02 và 2 mã trùng để xác định bài nào thực sự đã lên.
+2. Sửa bước xác minh sau khi bấm: ghi mốc "đã bấm" trước khi click và đưa mọi trường hợp không lấy được link sang trạng thái cần đối soát thay vì trả về hàng chờ (áp bản sửa Bài 2 vào production).
+3. Xử lý lỗi media của Nick-03: chặn đăng khi thiếu media và tự kiểm tra kết nối Media Bridge trước khi mở hộp soạn; hiện lỗi này chiếm 64% tổng số lỗi.
+4. Siết giãn cách: Nick-04 có 6 cặp thao tác liên tiếp dưới 60 giây (có cặp chỉ 20 giây) — thêm khoá theo profile và kiểm tra giãn cách ở tầng thực thi, không chỉ ở bộ xếp lịch.
+5. Chặn đăng ban đêm: Nick-05 có 6 bài bấm trong khung 0–6 giờ, cho thấy cấu hình giờ nghỉ chưa được áp cho toàn bộ nick; đối chiếu lại lịch đã sinh với `quietStartH/quietEndH`.
 
 Việc KHÔNG nên làm vội và lý do:
 
+Không nên tăng số lượng nick hoặc tăng tần suất đăng để "bù" cho các bài lỗi. Khi tỉ lệ thành công đang ở 0,44–0,83 và đã có dấu hiệu đăng trùng, việc tăng tải sẽ làm lỗi lan nhanh hơn, che mất nguyên nhân gốc và có thể khiến nick bị hạn chế nặng hơn. Cũng không nên tự động xoá các bài "chờ link" để làm sạch báo cáo, vì có thể xoá nhầm bài đã lên thật.
+
 Dữ liệu còn thiếu để kết luận chắc chắn hơn:
+
+Thiếu mã định danh duy nhất cho mỗi lần bấm (ID job/lần thử) nên không phân biệt được "bấm lại cùng một bài" với "hai bài khác nhau trùng mã"; thiếu thời điểm kết thúc và số lần thử nên không đo được độ trễ xác minh; thiếu kết quả sau khi lên bài (bài còn tồn tại, có bị gỡ, lượt hiển thị) nên chưa kết luận được nick nào đang bị hạn chế; và thiếu cấu hình mong đợi theo từng nick (trần ngày, giờ nghỉ) nên chưa biết các vi phạm 60 giây/ban đêm là do cấu hình hay do tool bỏ qua cấu hình.
 
 ## E. Video giải thích (3–5 phút, bắt buộc)
 

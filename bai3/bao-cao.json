@@ -1,0 +1,91 @@
+{
+  "per_nick": [
+    {
+      "nick": "Nick-01",
+      "tong": 15,
+      "da_dang": 11,
+      "loi": 2,
+      "cho_link": 0,
+      "cho_dang": 2,
+      "ti_le_thanh_cong": 0.7333
+    },
+    {
+      "nick": "Nick-02",
+      "tong": 17,
+      "da_dang": 8,
+      "loi": 0,
+      "cho_link": 7,
+      "cho_dang": 2,
+      "ti_le_thanh_cong": 0.4706
+    },
+    {
+      "nick": "Nick-03",
+      "tong": 18,
+      "da_dang": 8,
+      "loi": 9,
+      "cho_link": 0,
+      "cho_dang": 1,
+      "ti_le_thanh_cong": 0.4444
+    },
+    {
+      "nick": "Nick-04",
+      "tong": 12,
+      "da_dang": 10,
+      "loi": 0,
+      "cho_link": 0,
+      "cho_dang": 2,
+      "ti_le_thanh_cong": 0.8333
+    },
+    {
+      "nick": "Nick-05",
+      "tong": 15,
+      "da_dang": 12,
+      "loi": 3,
+      "cho_link": 0,
+      "cho_dang": 0,
+      "ti_le_thanh_cong": 0.8
+    }
+  ],
+  "nhom_loi": [
+    {
+      "nguyen_nhan": "Tải tệp 1: Dựng MP4: Extension chua duoc ghep noi voi Media Bridge.",
+      "so_lan": 9,
+      "nicks": [
+        "Nick-03"
+      ]
+    },
+    {
+      "nguyen_nhan": "Facebook phản hồi quá chậm hoặc giao diện không khớp.",
+      "so_lan": 3,
+      "nicks": [
+        "Nick-05"
+      ]
+    },
+    {
+      "nguyen_nhan": "Không xác định duy nhất nút: /^đăng$/i",
+      "so_lan": 2,
+      "nicks": [
+        "Nick-01"
+      ]
+    }
+  ],
+  "can_doi_soat": [
+    "DOC2::bai-4",
+    "DOC2::bai-5",
+    "DOC2::bai-6",
+    "DOC2::bai-7",
+    "DOC2::bai-8",
+    "DOC2::bai-9",
+    "DOC2::bai-9"
+  ],
+  "trung_ma": [
+    "DOC1::bai-6",
+    "DOC2::bai-9"
+  ],
+  "vi_pham_gian_cach": {
+    "Nick-04": 6
+  },
+  "dang_ban_dem": {
+    "Nick-05": 6
+  }
+}
