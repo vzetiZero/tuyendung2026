@@ -8,11 +8,11 @@ Link video giải thích (3–5 phút, xem mục D):
 
 | Bài | Công cụ | Dùng để làm gì (1 câu) | Tôi đã sửa hoặc bỏ phần nào của kết quả AI, vì sao |
 |---|---|---|---|
-| 1 | Deep-seek-v4.1 flash |  |  |
-| 2 |  |  |  |
-| 3 |  |  |  |
+| 1 |  Deep-seek-v4.1 flash |  |  |
+| 2 |  Deep-seek-v4.1 |  |  |
+| 3 |  Deep-seek-v4.1 |  |  |
 
-(Nếu không dùng AI cho bài nào thì ghi "không dùng".)
+
 
 ## B. Bài 1 — Bản đồ yêu cầu và quyết định
 
